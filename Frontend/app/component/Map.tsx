@@ -1,15 +1,7 @@
 "use client";
 
-import "leaflet/dist/leaflet.css";
-import React, { useEffect, useState } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  LayersControl,
-  useMapEvents,
-} from "react-leaflet";
+import dynamic from "next/dynamic";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -18,6 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // Fix Leaflet marker icon issue
@@ -27,8 +20,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
+// Dynamically import React Leaflet components
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
+const useMapEvents = require("react-leaflet").useMapEvents; // Use require instead of dynamic import
+
 const PollutionMap = () => {
-  const [isClient, setIsClient] = useState(false); // Check if the component is running on the client side
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
@@ -37,15 +36,11 @@ const PollutionMap = () => {
     type: "",
     description: "",
   });
-
-  useEffect(() => {
-    // This ensures the component runs only on the client side
-    setIsClient(true);
-  }, []);
+  const [activeLayer, setActiveLayer] = useState("OpenStreetMap"); // State for active layer
 
   const MapClickHandler = () => {
     useMapEvents({
-      click: (event) => {
+      click: (event:any) => {
         const { lat, lng } = event.latlng;
         setSelectedLocation({ lat, lng });
       },
@@ -71,12 +66,7 @@ const PollutionMap = () => {
 
   const handleSubmit = () => {
     if (popupData.type && popupData.description && selectedLocation) {
-      console.log("Pollution Report Submitted:", {
-        ...popupData,
-        location: selectedLocation,
-      });
-      alert("Pollution report submitted successfully!");
-
+      alert("Pollution report submitted!");
       setSelectedLocation(null); // Close popup after submission
       setPopupData({ type: "", description: "" }); // Reset form
     } else {
@@ -84,42 +74,45 @@ const PollutionMap = () => {
     }
   };
 
-  if (!isClient) {
-    // Render nothing until the component has mounted on the client
-    return null;
-  }
-
   return (
     <Box sx={{ width: "100%", height: "600px" }}>
+      <Box sx={{ marginBottom: 2 }}>
+        <Typography variant="h6">Choose Map Layer</Typography>
+        <Select
+          value={activeLayer}
+          onChange={(e) => setActiveLayer(e.target.value)}
+          fullWidth
+        >
+          <MenuItem value="OpenStreetMap">OpenStreetMap</MenuItem>
+          <MenuItem value="GPSMap">GPS Map</MenuItem>
+          <MenuItem value="Satellite">Satellite</MenuItem>
+        </Select>
+      </Box>
       <MapContainer
         center={[9.03, 38.75]} // Default center (e.g., Addis Ababa)
         zoom={12}
         style={{ height: "100%", width: "100%", zIndex: 1 }}
       >
-        <LayersControl position="topright">
-          <LayersControl.BaseLayer checked name="OpenStreetMap">
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
-          </LayersControl.BaseLayer>
-
-          <LayersControl.BaseLayer name="GPS Map">
-            <TileLayer
-              url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-              attribution="Map data: &copy; OpenTopoMap & contributors"
-            />
-          </LayersControl.BaseLayer>
-
-          <LayersControl.BaseLayer name="Satellite">
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              attribution="&copy; Esri, DigitalGlobe, GeoEye, Earthstar Geographics, and the GIS User Community"
-            />
-          </LayersControl.BaseLayer>
-        </LayersControl>
-
         <MapClickHandler />
+        {/* Switch between layers based on activeLayer state */}
+        {activeLayer === "OpenStreetMap" && (
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+          />
+        )}
+        {activeLayer === "GPSMap" && (
+          <TileLayer
+            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+            attribution="Map data: &copy; OpenTopoMap & contributors"
+          />
+        )}
+        {activeLayer === "Satellite" && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution="&copy; Esri, DigitalGlobe, GeoEye, Earthstar Geographics, and the GIS User Community"
+          />
+        )}
 
         {selectedLocation && (
           <Marker position={[selectedLocation.lat, selectedLocation.lng]}>
