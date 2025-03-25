@@ -1,7 +1,17 @@
 "use client";
+import { redirect, usePathname } from 'next/navigation'
+import "leaflet/dist/leaflet.css";
+import React, { useState,useEffect} from "react";
+import { SelectChangeEvent } from "@mui/material";
 
-import dynamic from "next/dynamic";
-import React, { useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  useMapEvents,
+  Marker,
+  Popup,
+  LayersControl,
+} from "react-leaflet";
 import {
   Box,
   Button,
@@ -10,37 +20,32 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix Leaflet marker icon issue
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-});
 
-// Dynamically import React Leaflet components
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
-const useMapEvents = require("react-leaflet").useMapEvents; // Use require instead of dynamic import
 
 const PollutionMap = () => {
+  if(!window) return null
+
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
+
   const [popupData, setPopupData] = useState({
     type: "",
     description: "",
   });
-  const [activeLayer, setActiveLayer] = useState("OpenStreetMap"); // State for active layer
-
+  // Fix Leaflet marker icon issue
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+  });
+  // Map click handler to get coordinates
   const MapClickHandler = () => {
     useMapEvents({
-      click: (event:any) => {
+      click: (event) => {
         const { lat, lng } = event.latlng;
         setSelectedLocation({ lat, lng });
       },
@@ -48,7 +53,10 @@ const PollutionMap = () => {
     return null;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Handle text field input changes
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setPopupData((prev) => ({
       ...prev,
@@ -56,19 +64,35 @@ const PollutionMap = () => {
     }));
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  // Handle Select input changes
+
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
     const { name, value } = e.target;
     setPopupData((prev) => ({
       ...prev,
-      [name || "type"]: value as string,
+      [name || "type"]: value,
     }));
   };
-
+  function generateRandomString() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 20; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      result += characters[randomIndex];
+    }
+    return result;
+  }
+  // Handle form submission
   const handleSubmit = () => {
     if (popupData.type && popupData.description && selectedLocation) {
-      alert("Pollution report submitted!");
-      setSelectedLocation(null); // Close popup after submission
-      setPopupData({ type: "", description: "" }); // Reset form
+      const draft=generateRandomString()
+          window && window.localStorage.setItem(draft,JSON.stringify( {
+            ...popupData,
+            ...selectedLocation,
+          }))
+          
+          redirect(`/createReport/${draft}`)
+      
     } else {
       alert("Please fill in all fields!");
     }
@@ -76,44 +100,41 @@ const PollutionMap = () => {
 
   return (
     <Box sx={{ width: "100%", height: "600px" }}>
-      <Box sx={{ marginBottom: 2 }}>
-        <Typography variant="h6">Choose Map Layer</Typography>
-        <Select
-          value={activeLayer}
-          onChange={(e) => setActiveLayer(e.target.value)}
-          fullWidth
-        >
-          <MenuItem value="OpenStreetMap">OpenStreetMap</MenuItem>
-          <MenuItem value="GPSMap">GPS Map</MenuItem>
-          <MenuItem value="Satellite">Satellite</MenuItem>
-        </Select>
-      </Box>
       <MapContainer
         center={[9.03, 38.75]} // Default center (e.g., Addis Ababa)
         zoom={12}
         style={{ height: "100%", width: "100%", zIndex: 1 }}
       >
-        <MapClickHandler />
-        {/* Switch between layers based on activeLayer state */}
-        {activeLayer === "OpenStreetMap" && (
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-          />
-        )}
-        {activeLayer === "GPSMap" && (
-          <TileLayer
-            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-            attribution="Map data: &copy; OpenTopoMap & contributors"
-          />
-        )}
-        {activeLayer === "Satellite" && (
-          <TileLayer
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            attribution="&copy; Esri, DigitalGlobe, GeoEye, Earthstar Geographics, and the GIS User Community"
-          />
-        )}
+        <LayersControl position="topright">
+          {/* Default OpenStreetMap Layer */}
+          <LayersControl.BaseLayer checked name="OpenStreetMap">
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+            />
+          </LayersControl.BaseLayer>
 
+          {/* GPS Map Layer */}
+          <LayersControl.BaseLayer name="GPS Map">
+            <TileLayer
+              url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+              attribution="Map data: &copy; OpenTopoMap & contributors"
+            />
+          </LayersControl.BaseLayer>
+
+          {/* Satellite Layer */}
+          <LayersControl.BaseLayer name="Satellite">
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="&copy; Esri, DigitalGlobe, GeoEye, Earthstar Geographics, and the GIS User Community"
+            />
+          </LayersControl.BaseLayer>
+        </LayersControl>
+
+        {/* Handle map click */}
+        <MapClickHandler />
+
+        {/* Show marker and popup for selected location */}
         {selectedLocation && (
           <Marker position={[selectedLocation.lat, selectedLocation.lng]}>
             <Popup>
@@ -125,7 +146,7 @@ const PollutionMap = () => {
                   fullWidth
                   name="type"
                   value={popupData.type}
-                  onChange={()=>handleSelectChange}
+                  onChange={handleSelectChange}
                   displayEmpty
                 >
                   <MenuItem value="">Select Pollution Type</MenuItem>

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+"use client"
+import React, { useState,useEffect } from "react";
 import {
   Box,
   Button,
@@ -7,13 +8,33 @@ import {
   Card,
   CardContent,
   CardActions,
-  Grid,
 } from "@mui/material";
 import { UploadFile as UploadFileIcon } from "@mui/icons-material";
 
-const MultimediaForm = () => {
+const MultimediaForm = ({draft}:{draft:string}) => {
+  const [selectedLocation, setSelectedLocation] = useState<{
+      lat: number;
+      lng: number;
+    } | null>(null);
+ const [popupData, setPopupData] = useState({
+        type: "",
+        description: "",
+      });
   const [files, setFiles] = useState<File[]>([]);
   const [playingFile, setPlayingFile] = useState<string | null>(null);
+
+useEffect(()=>{
+     const data=window && window.localStorage.getItem(draft)
+     const datas=data && JSON.parse(data)
+     setSelectedLocation({lat:datas.lat,lng:datas.lng})
+     setPopupData({type:datas.type,description:datas.description})
+},[])
+
+
+
+
+
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -45,15 +66,15 @@ const MultimediaForm = () => {
   };
 
   return (
-    <div className="grid lg:grid-cols-12 gap-10 mx-10">
-      <div className="col-span-4">
+    <div className=" mx-10">
+      <div className="">
     <Card sx={{ mt: 4, boxShadow: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Upload Multimedia
         </Typography>
         <Typography variant="body2" color="textSecondary">
-          Location: Latitude {}, Longitude {}
+          Location: Latitude {selectedLocation?.lat}, Longitude {selectedLocation?.lng}
         </Typography>
 
         <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
@@ -94,17 +115,18 @@ const MultimediaForm = () => {
       </CardActions>
     </Card>
     </div>
-    <div className="col-span-8">
+    <div className="">
     {files.length > 0 && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
               Selected Files:
             </Typography>
-                 <div className="grid lg:grid-cols-2 gap-10" >
+                 <div className="grid lg:grid-cols-2 gap-10 justify-center" >
               {files.map((file, index) => {
                 const fileUrl = URL.createObjectURL(file);
                 return (
                     <Box
+                    key={index}
                       sx={{
                         width: 400,
                         height: 400,

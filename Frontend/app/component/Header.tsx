@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from 'next/navigation'
 import Menu from "./menu"
 
-const link=[{'name':'Home','link':'/'},{'name':'Facilties','link':'/facilities'},{'name':'Rooms','link':'/rooms'},
+const link=[{'name':'Home','link':'/'},{'name':'Reports','link':'/Reports'},{'name':'About-us','link':'/About'},
     {'name':'Contact-Us','link':'/contact-us'}]
 export default function Nav() {
    const pathname=usePathname()
@@ -17,7 +17,7 @@ export default function Nav() {
         <div className="hidden   md:flex gap-10 ">
             {link.map((links)=>{
                 return(
-                   <Link scroll={false} key={links.name}  className={`link ${pathname === links.link ? 'underline  text-white font-serif font-semibold  ' : 'text-white font-serif font-semibold'}`}
+                   <Link scroll={false} key={links.name}  className={`link ${pathname === links.link ? 'underline  text-black font-serif font-semibold  ' : 'text-black font-serif font-semibold'}`}
                     href={links.link}   >{links.name}</Link>
                 )
             })} 
