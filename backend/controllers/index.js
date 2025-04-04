@@ -26,9 +26,11 @@ const getUserReports = async (req, res) => {
 const createReport=async(req,res)=>{
   try {
     const { type, description, location, media } = req.body;
-    const newReport = new Report({ type, description, location, media });
-    const savedReport = await newReport.save();
-    res.status(201).json(savedReport);
+    console.log(req.body);
+    
+    // const newReport = new Report({ type, description, location, media });
+    // const savedReport = await newReport.save();
+    // res.status(201).json(savedReport);
 } catch (error) {
     res.status(500).json({ message: 'Server Error' });
 }
@@ -52,4 +54,4 @@ const SignIn=async(req,res)=>{
     res.status(500).json({ message: 'Server Error' });
 }
 }
-module.exports={SignIn,SignUp,createReport,getuserReports}
+module.exports={SignIn,SignUp,createReport,getUserReports}

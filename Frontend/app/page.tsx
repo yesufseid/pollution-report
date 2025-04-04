@@ -1,18 +1,14 @@
-"use client";
-import { useEffect, useState } from "react";
-import PollutionMap from "./component/Map";
+"use client"
+import dynamic from "next/dynamic";
+
+const HomeClient = dynamic(() => import("./component/HomeClient"), { ssr: false });
+
 
 export default function Home() {
-  const [isBrowser, setIsBrowser] = useState(false);
-
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
-
   return (
     <div>
-      {isBrowser && <PollutionMap />}
-    </div>
+        <HomeClient />
+      </div>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client"
 import React, { useState,useEffect } from "react";
+import {postReport} from "../api/index"
 import {
   Box,
   Button,
@@ -56,13 +57,7 @@ useEffect(()=>{
       return;
     }
 
-    // Pass data to the parent or backend
-    const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
-    // formData.append("latitude", location);
-    // formData.append("longitude", location);
-
-    // onSubmit(formData);
+ postReport({location:selectedLocation, type:popupData.type, description:popupData.description,media:["image1.png"]})
   };
 
   return (

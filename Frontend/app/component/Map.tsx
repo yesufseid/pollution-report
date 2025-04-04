@@ -1,9 +1,8 @@
 "use client";
-import { redirect, usePathname } from 'next/navigation'
+import { redirect } from "next/navigation";
 import "leaflet/dist/leaflet.css";
-import React, { useState,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { SelectChangeEvent } from "@mui/material";
-
 import {
   MapContainer,
   TileLayer,
@@ -22,11 +21,7 @@ import {
 } from "@mui/material";
 import L from "leaflet";
 
-
-
-const PollutionMap = () => {
-  if(!window) return null
-
+export default function PollutionMap(){
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
@@ -36,13 +31,17 @@ const PollutionMap = () => {
     type: "",
     description: "",
   });
+
   // Fix Leaflet marker icon issue
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-  });
-  // Map click handler to get coordinates
+
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl:
+          "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+        iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+        shadowUrl:
+          "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+      });
+    
   const MapClickHandler = () => {
     useMapEvents({
       click: (event) => {
@@ -53,7 +52,6 @@ const PollutionMap = () => {
     return null;
   };
 
-  // Handle text field input changes
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -64,8 +62,6 @@ const PollutionMap = () => {
     }));
   };
 
-  // Handle Select input changes
-
   const handleSelectChange = (e: SelectChangeEvent<string>) => {
     const { name, value } = e.target;
     setPopupData((prev) => ({
@@ -73,30 +69,33 @@ const PollutionMap = () => {
       [name || "type"]: value,
     }));
   };
-  function generateRandomString() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
+
+  const generateRandomString = () => {
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
     for (let i = 0; i < 20; i++) {
       const randomIndex = Math.floor(Math.random() * characters.length);
       result += characters[randomIndex];
     }
     return result;
-  }
-  // Handle form submission
+  };
+
   const handleSubmit = () => {
     if (popupData.type && popupData.description && selectedLocation) {
-      const draft=generateRandomString()
-          window && window.localStorage.setItem(draft,JSON.stringify( {
+      const draft = generateRandomString();
+        window.localStorage.setItem(
+          draft,
+          JSON.stringify({
             ...popupData,
             ...selectedLocation,
-          }))
-          
-          redirect(`/createReport/${draft}`)
-      
-    } else {
-      alert("Please fill in all fields!");
-    }
+          })
+        );
+        redirect(`/createReport/${draft}`);
+      }
+  
   };
+
 
   return (
     <Box sx={{ width: "100%", height: "600px" }}>
@@ -106,7 +105,6 @@ const PollutionMap = () => {
         style={{ height: "100%", width: "100%", zIndex: 1 }}
       >
         <LayersControl position="topright">
-          {/* Default OpenStreetMap Layer */}
           <LayersControl.BaseLayer checked name="OpenStreetMap">
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -114,7 +112,6 @@ const PollutionMap = () => {
             />
           </LayersControl.BaseLayer>
 
-          {/* GPS Map Layer */}
           <LayersControl.BaseLayer name="GPS Map">
             <TileLayer
               url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
@@ -122,7 +119,6 @@ const PollutionMap = () => {
             />
           </LayersControl.BaseLayer>
 
-          {/* Satellite Layer */}
           <LayersControl.BaseLayer name="Satellite">
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -131,10 +127,8 @@ const PollutionMap = () => {
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        {/* Handle map click */}
         <MapClickHandler />
 
-        {/* Show marker and popup for selected location */}
         {selectedLocation && (
           <Marker position={[selectedLocation.lat, selectedLocation.lng]}>
             <Popup>
@@ -170,7 +164,7 @@ const PollutionMap = () => {
                   onClick={handleSubmit}
                   fullWidth
                 >
-                  Submit
+                  Create Report
                 </Button>
               </Box>
             </Popup>
@@ -181,4 +175,4 @@ const PollutionMap = () => {
   );
 };
 
-export default PollutionMap;
+
